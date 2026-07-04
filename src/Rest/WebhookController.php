@@ -8,6 +8,7 @@
 namespace AtxDigitalTicketing\Rest;
 
 use AtxDigitalTicketing\Plugin;
+use AtxDigitalTicketing\Support\Logger;
 use AtxDigitalTicketing\Support\Signature;
 use AtxDigitalTicketing\Sync\EventUpserter;
 use WP_REST_Request;
@@ -45,6 +46,8 @@ final class WebhookController {
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			error_log( '[atx-ticketing] Rejected webhook with invalid signature from ' . self::client_ip() );
 
+			Logger::log( 'sync', __( 'Rejected an incoming webhook: invalid signature.', 'atx-digital-ticketing-connect' ), 'error' );
+
 			return new WP_REST_Response( [ 'error' => 'Invalid signature.' ], 401 );
 		}
 
@@ -57,6 +60,10 @@ final class WebhookController {
 		$type = (string) $payload['type'];
 
 		if ( ! in_array( $type, [ 'event.published', 'event.updated', 'event.cancelled', 'event.deleted' ], true ) ) {
+			if ( 'connection.test' === $type ) {
+				Logger::log( 'sync', __( 'Laravel tested the connection (signature OK).', 'atx-digital-ticketing-connect' ) );
+			}
+
 			return new WP_REST_Response( [ 'ignored' => $type ], 200 );
 		}
 
@@ -65,9 +72,13 @@ final class WebhookController {
 		if ( is_wp_error( $result ) ) {
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			error_log( '[atx-ticketing] Webhook upsert failed: ' . $result->get_error_message() );
+			Logger::log( 'sync', sprintf( 'Failed to apply %s: %s', $type, $result->get_error_message() ), 'error' );
 
 			return new WP_REST_Response( [ 'error' => $result->get_error_message() ], 500 );
 		}
+
+		$event_title = (string) ( $payload['event']['title'] ?? ( '#' . ( $payload['event']['id'] ?? '?' ) ) );
+		Logger::log( 'sync', sprintf( 'Received %1$s for "%2$s".', $type, $event_title ) );
 
 		return new WP_REST_Response(
 			[

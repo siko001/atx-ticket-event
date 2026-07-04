@@ -61,6 +61,7 @@ final class EventUpserter {
 
 		$this->sync_meta( (int) $post_id, $event );
 		$this->sync_terms( (int) $post_id, is_array( $event['categories'] ?? null ) ? $event['categories'] : [] );
+		( new MediaSideloader() )->sync( (int) $post_id, $event );
 
 		return (int) $post_id;
 	}

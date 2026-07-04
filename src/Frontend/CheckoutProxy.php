@@ -8,6 +8,7 @@
 namespace AtxDigitalTicketing\Frontend;
 
 use AtxDigitalTicketing\Plugin;
+use AtxDigitalTicketing\Support\Logger;
 use WP_REST_Request;
 use WP_REST_Response;
 
@@ -83,6 +84,7 @@ final class CheckoutProxy {
 		if ( is_wp_error( $response ) ) {
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			error_log( '[atx-ticketing] Checkout proxy failed: ' . $response->get_error_message() );
+			Logger::log( 'buy', sprintf( 'Checkout for event #%1$d failed: %2$s', $event_id, $response->get_error_message() ), 'error' );
 
 			return new WP_REST_Response(
 				[ 'message' => __( 'Could not reach the ticketing service. Please try again shortly.', 'atx-digital-ticketing-connect' ) ],
@@ -92,6 +94,13 @@ final class CheckoutProxy {
 
 		$status  = (int) wp_remote_retrieve_response_code( $response );
 		$decoded = json_decode( wp_remote_retrieve_body( $response ), true );
+
+		if ( $status < 300 && is_array( $decoded ) && ! empty( $decoded['order_number'] ) ) {
+			Logger::log( 'buy', sprintf( 'Checkout started for event #%1$d — order %2$s.', $event_id, (string) $decoded['order_number'] ) );
+		} elseif ( $status >= 400 ) {
+			$message = is_array( $decoded ) && ! empty( $decoded['message'] ) ? (string) $decoded['message'] : 'validation failed';
+			Logger::log( 'buy', sprintf( 'Checkout for event #%1$d rejected (HTTP %2$d): %3$s', $event_id, $status, $message ), 'warning' );
+		}
 
 		return new WP_REST_Response( is_array( $decoded ) ? $decoded : [], $status );
 	}

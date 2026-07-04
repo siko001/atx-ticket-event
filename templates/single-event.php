@@ -30,13 +30,53 @@ $atx_sponsors = is_array( $event['sponsors'] ?? null ) ? $event['sponsors'] : []
 		<?php endif; ?>
 	</header>
 
-	<?php if ( has_post_thumbnail( $event_post ) ) : ?>
+	<?php
+	$atx_main_media_id = (int) get_post_meta( $event_post->ID, '_atx_main_media_id', true );
+	$atx_main_is_video = $atx_main_media_id > 0 && str_starts_with( (string) get_post_mime_type( $atx_main_media_id ), 'video/' );
+	?>
+	<?php if ( $atx_main_is_video ) : ?>
+		<div class="atx-event__thumb">
+			<video class="atx-video" controls preload="metadata" src="<?php echo esc_url( (string) wp_get_attachment_url( $atx_main_media_id ) ); ?>"></video>
+		</div>
+	<?php elseif ( has_post_thumbnail( $event_post ) ) : ?>
 		<div class="atx-event__thumb"><?php echo get_the_post_thumbnail( $event_post, 'large' ); ?></div>
 	<?php endif; ?>
 
 	<div class="atx-event__description">
 		<?php echo wp_kses_post( (string) ( $event['description'] ?? $event_post->post_content ) ); ?>
 	</div>
+
+	<?php
+	$atx_gallery_ids = get_post_meta( $event_post->ID, '_atx_gallery_ids', true );
+	$atx_gallery_ids = is_array( $atx_gallery_ids ) ? array_filter( array_map( 'absint', $atx_gallery_ids ) ) : [];
+	?>
+	<?php if ( $atx_gallery_ids ) : ?>
+		<section class="atx-event__gallery">
+			<div class="atx-gallery">
+				<?php foreach ( $atx_gallery_ids as $atx_gallery_id ) : ?>
+					<?php if ( str_starts_with( (string) get_post_mime_type( $atx_gallery_id ), 'video/' ) ) : ?>
+						<div class="atx-gallery__item">
+							<video class="atx-gallery__img" controls preload="metadata" src="<?php echo esc_url( (string) wp_get_attachment_url( $atx_gallery_id ) ); ?>"></video>
+						</div>
+					<?php else : ?>
+						<a class="atx-gallery__item" href="<?php echo esc_url( (string) wp_get_attachment_image_url( $atx_gallery_id, 'full' ) ); ?>" target="_blank" rel="noopener">
+							<?php
+							echo wp_get_attachment_image(
+								$atx_gallery_id,
+								'medium_large',
+								false,
+								[
+									'class'   => 'atx-gallery__img',
+									'loading' => 'lazy',
+								]
+							);
+							?>
+						</a>
+					<?php endif; ?>
+				<?php endforeach; ?>
+			</div>
+		</section>
+	<?php endif; ?>
 
 	<?php if ( ! empty( $atx_venue['name'] ) ) : ?>
 		<section class="atx-event__venue">

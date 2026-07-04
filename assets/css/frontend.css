@@ -206,3 +206,33 @@
 .atx-wrap__title {
 	margin: 0 0 1.5rem;
 }
+
+.atx-gallery {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+	gap: 0.75rem;
+	margin: 1.5rem 0;
+}
+
+.atx-gallery__item { display: block; border-radius: 0.5rem; overflow: hidden; }
+
+.atx-gallery__img {
+	width: 100%;
+	height: 100%;
+	aspect-ratio: 4 / 3;
+	object-fit: cover;
+	display: block;
+	transition: transform 0.2s ease;
+}
+
+.atx-gallery__item:hover .atx-gallery__img { transform: scale(1.04); }
+
+.atx-video {
+	width: 100%;
+	max-height: 480px;
+	border-radius: 0.5rem;
+	display: block;
+	background: #000;
+}
+
+video.atx-gallery__img { background: #000; }

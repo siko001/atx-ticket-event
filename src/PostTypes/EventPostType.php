@@ -102,10 +102,10 @@ final class EventPostType {
 	public static function register_meta_boxes(): void {
 		add_meta_box(
 			'atx-ticketing-source',
-			__( 'ATX Ticketing', 'atx-digital-ticketing-connect' ),
+			__( 'ATX Ticketing — event details', 'atx-digital-ticketing-connect' ),
 			[ self::class, 'render_source_meta_box' ],
 			self::POST_TYPE,
-			'side',
+			'normal',
 			'high'
 		);
 	}
@@ -114,33 +114,65 @@ final class EventPostType {
 		$settings  = Plugin::settings();
 		$event_id  = (int) get_post_meta( $post->ID, '_atx_event_id', true );
 		$status    = (string) get_post_meta( $post->ID, '_atx_status', true );
+		$lat       = (string) get_post_meta( $post->ID, '_atx_venue_lat', true );
+		$lng       = (string) get_post_meta( $post->ID, '_atx_venue_lng', true );
+		$payload   = self::payload( $post->ID );
 		$admin_url = $settings['admin_url'];
+
+		$rows = [
+			__( 'Status', 'atx-digital-ticketing-connect' ) => '' !== $status ? $status : 'unknown',
+			__( 'Event ID', 'atx-digital-ticketing-connect' ) => $event_id > 0 ? (string) $event_id : '',
+			__( 'Timezone', 'atx-digital-ticketing-connect' ) => (string) get_post_meta( $post->ID, '_atx_timezone', true ),
+			__( 'Capacity', 'atx-digital-ticketing-connect' ) => (string) get_post_meta( $post->ID, '_atx_max_capacity', true ),
+			__( 'Recurring', 'atx-digital-ticketing-connect' ) => get_post_meta( $post->ID, '_atx_is_recurring', true ) ? __( 'Yes', 'atx-digital-ticketing-connect' ) : __( 'No', 'atx-digital-ticketing-connect' ),
+			__( 'Next date', 'atx-digital-ticketing-connect' ) => (string) get_post_meta( $post->ID, '_atx_starts_at', true ),
+			__( 'Venue', 'atx-digital-ticketing-connect' ) => (string) get_post_meta( $post->ID, '_atx_venue_name', true ),
+			__( 'Address', 'atx-digital-ticketing-connect' ) => (string) get_post_meta( $post->ID, '_atx_venue_address', true ),
+			__( 'Latitude', 'atx-digital-ticketing-connect' ) => $lat,
+			__( 'Longitude', 'atx-digital-ticketing-connect' ) => $lng,
+			__( 'Dates synced', 'atx-digital-ticketing-connect' ) => (string) count( is_array( $payload['occurrences'] ?? null ) ? $payload['occurrences'] : [] ),
+			__( 'Ticket types', 'atx-digital-ticketing-connect' ) => (string) count( is_array( $payload['ticket_types'] ?? null ) ? $payload['ticket_types'] : [] ),
+			__( 'Speakers', 'atx-digital-ticketing-connect' ) => (string) count( is_array( $payload['speakers'] ?? null ) ? $payload['speakers'] : [] ),
+			__( 'Sponsors', 'atx-digital-ticketing-connect' ) => (string) count( is_array( $payload['sponsors'] ?? null ) ? $payload['sponsors'] : [] ),
+		];
 
 		echo '<p>' . esc_html__( 'This event is managed in the ATX Digital admin platform. Changes made here will be overwritten by the next sync.', 'atx-digital-ticketing-connect' ) . '</p>';
 
-		$rows = [
-			__( 'Status', 'atx-digital-ticketing-connect' )    => $status ?: 'unknown',
-			__( 'Event ID', 'atx-digital-ticketing-connect' )  => $event_id > 0 ? (string) $event_id : '',
-			__( 'Timezone', 'atx-digital-ticketing-connect' )  => (string) get_post_meta( $post->ID, '_atx_timezone', true ),
-			__( 'Capacity', 'atx-digital-ticketing-connect' )  => (string) get_post_meta( $post->ID, '_atx_max_capacity', true ),
-			__( 'Recurring', 'atx-digital-ticketing-connect' ) => get_post_meta( $post->ID, '_atx_is_recurring', true ) ? __( 'Yes', 'atx-digital-ticketing-connect' ) : '',
-			__( 'Next date', 'atx-digital-ticketing-connect' ) => (string) get_post_meta( $post->ID, '_atx_starts_at', true ),
-			__( 'Venue', 'atx-digital-ticketing-connect' )     => (string) get_post_meta( $post->ID, '_atx_venue_name', true ),
-		];
+		echo '<style>
+			.atx-meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0; border: 1px solid #dcdcde; border-radius: 4px; overflow: hidden; }
+			.atx-meta-grid__cell { padding: 10px 14px; border-bottom: 1px solid #f0f0f1; border-right: 1px solid #f0f0f1; }
+			.atx-meta-grid__label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: #646970; margin-bottom: 2px; }
+			.atx-meta-grid__value { font-size: 14px; font-weight: 500; word-break: break-word; }
+			.atx-meta-actions { margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
+		</style>';
+
+		echo '<div class="atx-meta-grid">';
 
 		foreach ( $rows as $label => $value ) {
 			if ( '' === $value ) {
 				continue;
 			}
 
-			echo '<p style="margin:0.35em 0;"><strong>' . esc_html( $label ) . ':</strong> ' . esc_html( $value ) . '</p>';
+			echo '<div class="atx-meta-grid__cell"><span class="atx-meta-grid__label">' . esc_html( $label ) . '</span><span class="atx-meta-grid__value">' . esc_html( $value ) . '</span></div>';
 		}
+
+		echo '</div>';
+
+		echo '<div class="atx-meta-actions">';
 
 		if ( '' !== $admin_url && $event_id > 0 ) {
 			$url = trailingslashit( $admin_url ) . 'events/' . $event_id . '/edit';
-			echo '<p><a class="button button-primary" href="' . esc_url( $url ) . '" target="_blank" rel="noopener">'
-				. esc_html__( 'Edit in ATX admin ↗', 'atx-digital-ticketing-connect' ) . '</a></p>';
+			echo '<a class="button button-primary" href="' . esc_url( $url ) . '" target="_blank" rel="noopener">'
+				. esc_html__( 'Edit in ATX admin ↗', 'atx-digital-ticketing-connect' ) . '</a>';
 		}
+
+		if ( '' !== $lat && '' !== $lng ) {
+			$map_url = 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode( $lat . ',' . $lng );
+			echo '<a class="button" href="' . esc_url( $map_url ) . '" target="_blank" rel="noopener">'
+				. esc_html__( 'View on Google Maps ↗', 'atx-digital-ticketing-connect' ) . '</a>';
+		}
+
+		echo '</div>';
 	}
 
 	/**

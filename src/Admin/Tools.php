@@ -8,6 +8,7 @@
 namespace AtxDigitalTicketing\Admin;
 
 use AtxDigitalTicketing\Plugin;
+use AtxDigitalTicketing\Support\Logger;
 use AtxDigitalTicketing\Support\Signature;
 use AtxDigitalTicketing\Sync\EventUpserter;
 
@@ -24,6 +25,7 @@ final class Tools {
 		add_action( 'wp_ajax_atx_ticketing_test_connection', [ self::class, 'test_connection' ] );
 		add_action( 'wp_ajax_atx_ticketing_sync', [ self::class, 'sync' ] );
 		add_action( 'wp_ajax_atx_ticketing_create_pages', [ self::class, 'create_pages' ] );
+		add_action( 'wp_ajax_atx_ticketing_clear_logs', [ self::class, 'clear_logs' ] );
 	}
 
 	private static function authorize(): void {
@@ -151,6 +153,12 @@ final class Tools {
 			++$synced;
 		}
 
+		Logger::log(
+			'sync',
+			sprintf( 'Manual sync pulled %1$d event(s) from Laravel%2$s.', $synced, $failed > 0 ? sprintf( ' (%d failed)', $failed ) : '' ),
+			$failed > 0 ? 'warning' : 'info'
+		);
+
 		update_option(
 			'atx_ticketing_last_sync',
 			[
@@ -249,5 +257,18 @@ final class Tools {
 
 	private static function page_usable( int $page_id ): bool {
 		return $page_id > 0 && 'page' === get_post_type( $page_id ) && 'trash' !== get_post_status( $page_id );
+	}
+
+	public static function clear_logs(): void {
+		self::authorize();
+
+		Logger::clear();
+
+		wp_send_json_success(
+			[
+				'message' => __( 'Logs cleared.', 'atx-digital-ticketing-connect' ),
+				'reload'  => true,
+			]
+		);
 	}
 }

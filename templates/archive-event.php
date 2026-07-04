@@ -20,12 +20,12 @@ defined( 'ABSPATH' ) || exit;
 	while ( $events_query->have_posts() ) :
 		$events_query->the_post();
 
-		$starts_at = (string) get_post_meta( get_the_ID(), '_atx_starts_at', true );
-		$venue     = (string) get_post_meta( get_the_ID(), '_atx_venue_name', true );
-		$status    = (string) get_post_meta( get_the_ID(), '_atx_status', true );
-		$timestamp = $starts_at ? strtotime( $starts_at ) : false;
+		$starts_at  = (string) get_post_meta( get_the_ID(), '_atx_starts_at', true );
+		$venue      = (string) get_post_meta( get_the_ID(), '_atx_venue_name', true );
+		$atx_status = (string) get_post_meta( get_the_ID(), '_atx_status', true );
+		$timestamp  = $starts_at ? strtotime( $starts_at ) : false;
 		?>
-		<article class="atx-events__card<?php echo 'cancelled' === $status ? ' is-cancelled' : ''; ?>">
+		<article class="atx-events__card<?php echo 'cancelled' === $atx_status ? ' is-cancelled' : ''; ?>">
 			<?php if ( has_post_thumbnail() ) : ?>
 				<a href="<?php the_permalink(); ?>" class="atx-events__thumb"><?php the_post_thumbnail( 'medium_large' ); ?></a>
 			<?php endif; ?>
@@ -33,7 +33,7 @@ defined( 'ABSPATH' ) || exit;
 			<div class="atx-events__body">
 				<h3 class="atx-events__title">
 					<a href="<?php the_permalink(); ?>"><?php the_title(); ?></a>
-					<?php if ( 'cancelled' === $status ) : ?>
+					<?php if ( 'cancelled' === $atx_status ) : ?>
 						<span class="atx-badge atx-badge--cancelled"><?php esc_html_e( 'Cancelled', 'atx-digital-ticketing-connect' ); ?></span>
 					<?php endif; ?>
 				</h3>

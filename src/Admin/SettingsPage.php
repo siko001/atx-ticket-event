@@ -9,6 +9,7 @@ namespace AtxDigitalTicketing\Admin;
 
 use AtxDigitalTicketing\Plugin;
 use AtxDigitalTicketing\PostTypes\EventPostType;
+use AtxDigitalTicketing\Support\Logger;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -71,25 +72,25 @@ final class SettingsPage {
 		$current = Plugin::settings();
 
 		return [
-			'api_base_url'    => array_key_exists( 'api_base_url', $input )
+			'api_base_url'         => array_key_exists( 'api_base_url', $input )
 				? esc_url_raw( untrailingslashit( (string) $input['api_base_url'] ) )
 				: $current['api_base_url'],
-			'webhook_secret'  => array_key_exists( 'webhook_secret', $input )
+			'webhook_secret'       => array_key_exists( 'webhook_secret', $input )
 				? sanitize_text_field( (string) $input['webhook_secret'] )
 				: $current['webhook_secret'],
-			'admin_url'       => array_key_exists( 'admin_url', $input )
+			'admin_url'            => array_key_exists( 'admin_url', $input )
 				? esc_url_raw( (string) $input['admin_url'] )
 				: $current['admin_url'],
-			'success_page_id' => array_key_exists( 'success_page_id', $input )
+			'success_page_id'      => array_key_exists( 'success_page_id', $input )
 				? absint( $input['success_page_id'] )
 				: (int) $current['success_page_id'],
-			'cancel_page_id'  => array_key_exists( 'cancel_page_id', $input )
+			'cancel_page_id'       => array_key_exists( 'cancel_page_id', $input )
 				? absint( $input['cancel_page_id'] )
 				: (int) $current['cancel_page_id'],
 			'use_plugin_templates' => array_key_exists( 'use_plugin_templates', $input )
 				? (int) (bool) $input['use_plugin_templates']
 				: (int) $current['use_plugin_templates'],
-			'use_plugin_styles' => array_key_exists( 'use_plugin_styles', $input )
+			'use_plugin_styles'    => array_key_exists( 'use_plugin_styles', $input )
 				? (int) (bool) $input['use_plugin_styles']
 				: (int) $current['use_plugin_styles'],
 		];
@@ -97,7 +98,7 @@ final class SettingsPage {
 
 	private static function current_tab(): string {
 		$tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'connection'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		return in_array( $tab, [ 'connection', 'display', 'pages', 'tools' ], true ) ? $tab : 'connection';
+		return in_array( $tab, [ 'connection', 'display', 'pages', 'tools', 'logs' ], true ) ? $tab : 'connection';
 	}
 
 	public static function render(): void {
@@ -112,6 +113,7 @@ final class SettingsPage {
 			'display'    => __( 'Display', 'atx-digital-ticketing-connect' ),
 			'pages'      => __( 'Pages', 'atx-digital-ticketing-connect' ),
 			'tools'      => __( 'Tools', 'atx-digital-ticketing-connect' ),
+			'logs'       => __( 'Logs', 'atx-digital-ticketing-connect' ),
 		];
 
 		?>
@@ -130,6 +132,8 @@ final class SettingsPage {
 			<?php
 			if ( 'tools' === $tab ) {
 				self::render_tools_tab();
+			} elseif ( 'logs' === $tab ) {
+				self::render_logs_tab();
 			} else {
 				self::render_settings_tab( $tab );
 			}
@@ -212,6 +216,57 @@ final class SettingsPage {
 		<?php
 	}
 
+	private static function render_logs_tab(): void {
+		$entries = Logger::entries();
+
+		?>
+		<h2><?php esc_html_e( 'Activity logs', 'atx-digital-ticketing-connect' ); ?></h2>
+		<p><?php esc_html_e( 'Sync traffic from the ATX platform and ticket checkout activity on this site. The ATX admin keeps its own copy under System → Logs.', 'atx-digital-ticketing-connect' ); ?></p>
+		<p>
+			<button type="button" class="button atx-tool" data-action="atx_ticketing_clear_logs">
+				<?php esc_html_e( 'Clear logs', 'atx-digital-ticketing-connect' ); ?>
+			</button>
+			<span class="atx-tool-result" aria-live="polite"></span>
+		</p>
+
+		<?php if ( ! $entries ) : ?>
+			<p><em><?php esc_html_e( 'No activity yet — publish an event in the ATX admin or run a sync.', 'atx-digital-ticketing-connect' ); ?></em></p>
+			<?php return; ?>
+		<?php endif; ?>
+
+		<table class="widefat striped" style="max-width:1000px;">
+			<thead>
+				<tr>
+					<th style="width:170px;"><?php esc_html_e( 'When', 'atx-digital-ticketing-connect' ); ?></th>
+					<th style="width:80px;"><?php esc_html_e( 'Type', 'atx-digital-ticketing-connect' ); ?></th>
+					<th><?php esc_html_e( 'Message', 'atx-digital-ticketing-connect' ); ?></th>
+				</tr>
+			</thead>
+			<tbody>
+				<?php foreach ( $entries as $entry ) : ?>
+					<tr>
+						<td><?php echo esc_html( wp_date( 'j M Y, H:i:s', (int) ( $entry['time'] ?? 0 ) ) ); ?></td>
+						<td>
+							<?php
+							$level   = (string) ( $entry['level'] ?? 'info' );
+							$colours = [
+								'error'   => '#b32d2e',
+								'warning' => '#996800',
+								'info'    => '#2271b1',
+							];
+							?>
+							<strong style="color:<?php echo esc_attr( $colours[ $level ] ?? '#2271b1' ); ?>;">
+								<?php echo esc_html( (string) ( $entry['channel'] ?? '' ) ); ?>
+							</strong>
+						</td>
+						<td><?php echo esc_html( (string) ( $entry['message'] ?? '' ) ); ?></td>
+					</tr>
+				<?php endforeach; ?>
+			</tbody>
+		</table>
+		<?php
+	}
+
 	public static function enqueue_assets( string $hook_suffix ): void {
 		if ( EventPostType::POST_TYPE . '_page_' . self::SLUG !== $hook_suffix ) {
 			return;
@@ -229,11 +284,11 @@ final class SettingsPage {
 			'atx-ticketing-admin-settings',
 			'atxTicketingAdmin',
 			[
-				'ajaxUrl'         => admin_url( 'admin-ajax.php' ),
-				'nonce'           => wp_create_nonce( Tools::NONCE ),
-				'regenerateWarn'  => __( 'Regenerating will break the connection until you copy the new secret into TICKETING_WP_WEBHOOK_SECRET in the Laravel .env (then run php artisan config:clear). Continue?', 'atx-digital-ticketing-connect' ),
-				'copyHint'        => __( 'New secret generated. Click "Save Changes", then copy it into TICKETING_WP_WEBHOOK_SECRET in the Laravel .env.', 'atx-digital-ticketing-connect' ),
-				'workingLabel'    => __( 'Working…', 'atx-digital-ticketing-connect' ),
+				'ajaxUrl'        => admin_url( 'admin-ajax.php' ),
+				'nonce'          => wp_create_nonce( Tools::NONCE ),
+				'regenerateWarn' => __( 'Regenerating will break the connection until you copy the new secret into TICKETING_WP_WEBHOOK_SECRET in the Laravel .env (then run php artisan config:clear). Continue?', 'atx-digital-ticketing-connect' ),
+				'copyHint'       => __( 'New secret generated. Click "Save Changes", then copy it into TICKETING_WP_WEBHOOK_SECRET in the Laravel .env.', 'atx-digital-ticketing-connect' ),
+				'workingLabel'   => __( 'Working…', 'atx-digital-ticketing-connect' ),
 			]
 		);
 	}

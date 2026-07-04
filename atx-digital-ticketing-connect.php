@@ -26,12 +26,12 @@ if ( file_exists( ATX_TICKETING_DIR . 'vendor/autoload.php' ) ) {
 	require ATX_TICKETING_DIR . 'vendor/autoload.php';
 } else {
 	spl_autoload_register(
-		static function ( string $class ): void {
-			if ( ! str_starts_with( $class, 'AtxDigitalTicketing\\' ) ) {
+		static function ( string $class_name ): void {
+			if ( ! str_starts_with( $class_name, 'AtxDigitalTicketing\\' ) ) {
 				return;
 			}
 
-			$relative = substr( $class, strlen( 'AtxDigitalTicketing\\' ) );
+			$relative = substr( $class_name, strlen( 'AtxDigitalTicketing\\' ) );
 			$path     = ATX_TICKETING_DIR . 'src/' . str_replace( '\\', '/', $relative ) . '.php';
 
 			if ( file_exists( $path ) ) {
@@ -63,4 +63,3 @@ add_action(
 		}
 	}
 );
-

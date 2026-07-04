@@ -13,6 +13,9 @@
     <config name="minimum_wp_version" value="6.4"/>
     <config name="testVersion" value="8.1-"/>
 
+    <!-- Vendored from the ATX GitHub updater kit; kept byte-compatible with upstream. -->
+    <exclude-pattern>src/Support/GitHubPluginUpdater\.php</exclude-pattern>
+
     <rule ref="WordPress-Extra">
         <!-- PSR-4 class files instead of class-*.php naming. -->
         <exclude name="WordPress.Files.FileName"/>
