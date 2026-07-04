@@ -82,20 +82,21 @@ final class EventPostType {
 	 */
 	public static function structured_meta_keys(): array {
 		return [
-			'_atx_event_id'      => 'integer',
-			'_atx_starts_at'     => 'string',
-			'_atx_ends_at'       => 'string',
-			'_atx_timezone'      => 'string',
-			'_atx_max_capacity'  => 'integer',
-			'_atx_is_recurring'  => 'boolean',
-			'_atx_published_at'  => 'string',
-			'_atx_venue_name'    => 'string',
-			'_atx_venue_address' => 'string',
-			'_atx_venue_lat'     => 'string',
-			'_atx_venue_lng'     => 'string',
-			'_atx_checkout_url'  => 'string',
-			'_atx_status'        => 'string',
-			'_atx_payload'       => 'string',
+			'_atx_event_id'                  => 'integer',
+			'_atx_starts_at'                 => 'string',
+			'_atx_ends_at'                   => 'string',
+			'_atx_timezone'                  => 'string',
+			'_atx_max_capacity'              => 'integer',
+			'_atx_is_recurring'              => 'boolean',
+			'_atx_requires_attendee_details' => 'boolean',
+			'_atx_published_at'              => 'string',
+			'_atx_venue_name'                => 'string',
+			'_atx_venue_address'             => 'string',
+			'_atx_venue_lat'                 => 'string',
+			'_atx_venue_lng'                 => 'string',
+			'_atx_checkout_url'              => 'string',
+			'_atx_status'                    => 'string',
+			'_atx_payload'                   => 'string',
 		];
 	}
 

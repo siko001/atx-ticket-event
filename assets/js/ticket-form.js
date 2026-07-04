@@ -23,6 +23,80 @@
 		}
 	}
 
+	function requiresAttendees(form) {
+		return form.dataset.requiresAttendees === '1';
+	}
+
+	function renderAttendeeFields(form) {
+		var wrap = form.querySelector('[data-attendee-fields]');
+		var list = form.querySelector('.atx-attendees');
+		if (!wrap || !list || !requiresAttendees(form)) {
+			return;
+		}
+
+		// Preserve anything already typed before re-rendering.
+		var previous = {};
+		list.querySelectorAll('input').forEach(function (input) {
+			previous[input.name] = input.value;
+		});
+
+		list.innerHTML = '';
+		var total = 0;
+
+		form.querySelectorAll('input[data-ticket-type]').forEach(function (qtyInput) {
+			var qty = parseInt(qtyInput.value, 10) || 0;
+			var typeId = qtyInput.dataset.ticketType;
+			var typeName = qtyInput.dataset.ticketName || 'Ticket';
+
+			for (var unit = 0; unit < qty; unit++) {
+				total++;
+				var nameField = 'attendee_name[' + typeId + '][' + unit + ']';
+				var emailField = 'attendee_email[' + typeId + '][' + unit + ']';
+
+				var row = document.createElement('div');
+				row.className = 'atx-attendee-row';
+				row.innerHTML =
+					'<span class="atx-attendee-row__label">' + typeName + ' — ticket ' + (unit + 1) + '</span>' +
+					'<input type="text" name="' + nameField + '" placeholder="Full name *" required autocomplete="off">' +
+					'<input type="email" name="' + emailField + '" placeholder="Email (optional)" autocomplete="off">';
+				list.appendChild(row);
+
+				row.querySelectorAll('input').forEach(function (input) {
+					if (previous[input.name]) {
+						input.value = previous[input.name];
+					}
+				});
+			}
+		});
+
+		wrap.hidden = total === 0;
+	}
+
+	function collectAttendees(form) {
+		var attendees = [];
+
+		form.querySelectorAll('.atx-attendees input[type="text"]').forEach(function (nameInput) {
+			var match = nameInput.name.match(/^attendee_name\[(\d+)\]\[(\d+)\]$/);
+			if (!match) {
+				return;
+			}
+
+			var emailInput = form.querySelector('[name="attendee_email[' + match[1] + '][' + match[2] + ']"]');
+			var attendee = {
+				ticket_type_id: parseInt(match[1], 10),
+				name: nameInput.value.trim()
+			};
+
+			if (emailInput && emailInput.value.trim() !== '') {
+				attendee.email = emailInput.value.trim();
+			}
+
+			attendees.push(attendee);
+		});
+
+		return attendees;
+	}
+
 	function collectPayload(form) {
 		var items = [];
 		form.querySelectorAll('input[data-ticket-type]').forEach(function (input) {
@@ -64,6 +138,7 @@
 				email: (form.querySelector('[name="purchaser_email"]') || {}).value || ''
 			},
 			answers: answers,
+			attendees: collectAttendees(form),
 			discount_code: (form.querySelector('[name="discount_code"]') || {}).value || ''
 		};
 	}
@@ -78,6 +153,11 @@
 
 		if (!payload.items.length) {
 			showErrors(form, [form.dataset.msgNoTickets || 'Please choose at least one ticket.']);
+			return;
+		}
+
+		if (requiresAttendees(form) && payload.attendees.some(function (a) { return a.name === ''; })) {
+			showErrors(form, ['Please enter a name for every ticket.']);
 			return;
 		}
 

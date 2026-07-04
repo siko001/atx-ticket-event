@@ -62,6 +62,7 @@ final class CheckoutProxy {
 			'items'         => self::sanitize_items( $body['items'] ?? [] ),
 			'purchaser'     => self::sanitize_purchaser( $body['purchaser'] ?? [] ),
 			'answers'       => self::sanitize_answers( $body['answers'] ?? [] ),
+			'attendees'     => self::sanitize_attendees( $body['attendees'] ?? [] ),
 			'discount_code' => isset( $body['discount_code'] ) && '' !== $body['discount_code']
 				? sanitize_text_field( (string) $body['discount_code'] )
 				: null,
@@ -103,6 +104,38 @@ final class CheckoutProxy {
 		}
 
 		return new WP_REST_Response( is_array( $decoded ) ? $decoded : [], $status );
+	}
+
+	/**
+	 * Per-ticket attendee details (used when the event names every ticket).
+	 *
+	 * @param mixed $attendees Raw attendees input.
+	 * @return array<int, array{ticket_type_id: int, name: string, email?: string}>
+	 */
+	private static function sanitize_attendees( $attendees ): array {
+		$clean = [];
+
+		foreach ( (array) $attendees as $attendee ) {
+			$ticket_type_id = isset( $attendee['ticket_type_id'] ) ? absint( $attendee['ticket_type_id'] ) : 0;
+			$name           = isset( $attendee['name'] ) ? sanitize_text_field( (string) $attendee['name'] ) : '';
+
+			if ( $ticket_type_id <= 0 ) {
+				continue;
+			}
+
+			$entry = [
+				'ticket_type_id' => $ticket_type_id,
+				'name'           => $name,
+			];
+
+			if ( ! empty( $attendee['email'] ) && is_email( (string) $attendee['email'] ) ) {
+				$entry['email'] = sanitize_email( (string) $attendee['email'] );
+			}
+
+			$clean[] = $entry;
+		}
+
+		return $clean;
 	}
 
 	/**

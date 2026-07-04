@@ -236,3 +236,30 @@
 }
 
 video.atx-gallery__img { background: #000; }
+
+.atx-attendee-row {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 0.5rem;
+	margin: 0 0 0.75rem;
+}
+
+.atx-attendee-row__label {
+	grid-column: 1 / -1;
+	font-size: 0.85rem;
+	font-weight: 600;
+	opacity: 0.8;
+}
+
+.atx-attendee-row input {
+	width: 100%;
+	padding: 0.5rem 0.65rem;
+	border: 1px solid rgb(120 120 135 / 0.4);
+	border-radius: 0.4rem;
+}
+
+.atx-field__hint { font-size: 0.85rem; opacity: 0.75; margin: 0.25rem 0 1rem; }
+
+@media (max-width: 560px) {
+	.atx-attendee-row { grid-template-columns: 1fr; }
+}

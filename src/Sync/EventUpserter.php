@@ -85,6 +85,7 @@ final class EventUpserter {
 		update_post_meta( $post_id, '_atx_timezone', sanitize_text_field( (string) ( $event['timezone'] ?? '' ) ) );
 		update_post_meta( $post_id, '_atx_max_capacity', absint( $event['max_capacity'] ?? 0 ) );
 		update_post_meta( $post_id, '_atx_is_recurring', ! empty( $event['is_recurring'] ) ? 1 : 0 );
+		update_post_meta( $post_id, '_atx_requires_attendee_details', ! empty( $event['requires_attendee_details'] ) ? 1 : 0 );
 		update_post_meta( $post_id, '_atx_published_at', sanitize_text_field( (string) ( $event['published_at'] ?? '' ) ) );
 		update_post_meta( $post_id, '_atx_checkout_url', esc_url_raw( (string) ( $event['checkout_url'] ?? '' ) ) );
 		update_post_meta( $post_id, '_atx_payload', wp_json_encode( $event ) );

@@ -34,7 +34,10 @@ $atx_format_price = static function ( int $minor, string $currency ): string {
 	return strtoupper( $currency ) . ' ' . number_format_i18n( $minor / 100, 2 );
 };
 ?>
-<form class="atx-ticket-form" data-event-id="<?php echo esc_attr( (string) $atx_event_id ); ?>" novalidate>
+<form class="atx-ticket-form"
+	data-event-id="<?php echo esc_attr( (string) $atx_event_id ); ?>"
+	data-requires-attendees="<?php echo ! empty( $event['requires_attendee_details'] ) ? '1' : '0'; ?>"
+	novalidate>
 	<div class="atx-ticket-form__errors" hidden></div>
 
 	<?php if ( count( $atx_occurrences ) > 1 ) : ?>
@@ -65,10 +68,16 @@ $atx_format_price = static function ( int $minor, string $currency ): string {
 				</div>
 				<label class="atx-ticket-row__qty">
 					<span class="screen-reader-text"><?php esc_html_e( 'Quantity', 'atx-digital-ticketing-connect' ); ?></span>
-					<input type="number" min="0" max="10" value="0" name="qty[<?php echo esc_attr( (string) $atx_ticket['id'] ); ?>]" data-ticket-type="<?php echo esc_attr( (string) $atx_ticket['id'] ); ?>">
+					<input type="number" min="0" max="10" value="0" name="qty[<?php echo esc_attr( (string) $atx_ticket['id'] ); ?>]" data-ticket-type="<?php echo esc_attr( (string) $atx_ticket['id'] ); ?>" data-ticket-name="<?php echo esc_attr( (string) ( $atx_ticket['name'] ?? '' ) ); ?>">
 				</label>
 			</div>
 		<?php endforeach; ?>
+	</fieldset>
+
+	<fieldset class="atx-ticket-form__attendees" data-attendee-fields hidden>
+		<legend><?php esc_html_e( 'Who are the tickets for?', 'atx-digital-ticketing-connect' ); ?></legend>
+		<p class="atx-field__hint"><?php esc_html_e( 'This event issues personal tickets — enter a name for each one. Email is optional (tickets are also sent to the buyer).', 'atx-digital-ticketing-connect' ); ?></p>
+		<div class="atx-attendees"></div>
 	</fieldset>
 
 	<fieldset class="atx-ticket-form__purchaser">
