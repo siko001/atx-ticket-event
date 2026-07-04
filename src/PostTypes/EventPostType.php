@@ -109,6 +109,15 @@ final class EventPostType {
 			'normal',
 			'high'
 		);
+
+		add_meta_box(
+			'atx-ticketing-gallery',
+			__( 'Event gallery (synced)', 'atx-digital-ticketing-connect' ),
+			[ self::class, 'render_gallery_meta_box' ],
+			self::POST_TYPE,
+			'side',
+			'default'
+		);
 	}
 
 	public static function render_source_meta_box( WP_Post $post ): void {
@@ -159,6 +168,61 @@ final class EventPostType {
 
 		echo '</div>';
 
+		$tickets = is_array( $payload['ticket_types'] ?? null ) ? $payload['ticket_types'] : [];
+
+		if ( $tickets ) {
+			echo '<h4 style="margin:16px 0 8px;">' . esc_html__( 'Ticket types', 'atx-digital-ticketing-connect' ) . '</h4>';
+			echo '<table class="widefat striped"><thead><tr>'
+				. '<th>' . esc_html__( 'Name', 'atx-digital-ticketing-connect' ) . '</th>'
+				. '<th>' . esc_html__( 'Price', 'atx-digital-ticketing-connect' ) . '</th>'
+				. '<th>' . esc_html__( 'Available', 'atx-digital-ticketing-connect' ) . '</th>'
+				. '<th>' . esc_html__( 'Sold', 'atx-digital-ticketing-connect' ) . '</th>'
+				. '</tr></thead><tbody>';
+
+			foreach ( $tickets as $ticket ) {
+				$quantity = $ticket['quantity_available'] ?? null;
+				$sold     = (int) ( $ticket['quantity_sold'] ?? 0 );
+				$left     = null === $quantity ? __( 'Unlimited', 'atx-digital-ticketing-connect' ) : max( 0, (int) $quantity - $sold ) . ' / ' . (int) $quantity;
+
+				echo '<tr>'
+					. '<td><strong>' . esc_html( (string) ( $ticket['name'] ?? '' ) ) . '</strong></td>'
+					. '<td>' . esc_html( strtoupper( (string) ( $ticket['currency'] ?? '' ) ) . ' ' . number_format_i18n( ( (int) ( $ticket['price'] ?? 0 ) ) / 100, 2 ) ) . '</td>'
+					. '<td>' . esc_html( $left ) . '</td>'
+					. '<td>' . esc_html( (string) $sold ) . '</td>'
+					. '</tr>';
+			}
+
+			echo '</tbody></table>';
+		}
+
+		$occurrences = is_array( $payload['occurrences'] ?? null ) ? $payload['occurrences'] : [];
+
+		if ( $occurrences ) {
+			echo '<h4 style="margin:16px 0 8px;">' . esc_html__( 'Upcoming dates', 'atx-digital-ticketing-connect' ) . '</h4><ul style="margin:0 0 4px 18px;list-style:disc;">';
+
+			$shown = 0;
+			foreach ( $occurrences as $occurrence ) {
+				$start = strtotime( (string) ( $occurrence['starts_at'] ?? '' ) );
+
+				if ( false === $start || $start < time() ) {
+					continue;
+				}
+
+				echo '<li>' . esc_html( wp_date( (string) get_option( 'date_format' ) . ' ' . (string) get_option( 'time_format' ), $start ) ) . '</li>';
+
+				if ( ++$shown >= 6 ) {
+					$remaining = count( $occurrences ) - $shown;
+					if ( $remaining > 0 ) {
+						/* translators: %d: number of further dates. */
+						echo '<li>' . esc_html( sprintf( __( '… and %d more', 'atx-digital-ticketing-connect' ), $remaining ) ) . '</li>';
+					}
+					break;
+				}
+			}
+
+			echo '</ul>';
+		}
+
 		echo '<div class="atx-meta-actions">';
 
 		if ( '' !== $admin_url && $event_id > 0 ) {
@@ -203,5 +267,45 @@ final class EventPostType {
 		$decoded = json_decode( $raw, true );
 
 		return is_array( $decoded ) ? $decoded : [];
+	}
+
+	/**
+	 * Read-only gallery panel (WooCommerce-style) showing the media synced
+	 * from the ATX admin — managed there, mirrored here.
+	 */
+	public static function render_gallery_meta_box( WP_Post $post ): void {
+		$gallery_ids = get_post_meta( $post->ID, '_atx_gallery_ids', true );
+		$gallery_ids = is_array( $gallery_ids ) ? array_filter( array_map( 'absint', $gallery_ids ) ) : [];
+
+		if ( ! $gallery_ids ) {
+			echo '<p>' . esc_html__( 'No gallery media synced yet. Add images/videos to the event in the ATX admin and re-sync.', 'atx-digital-ticketing-connect' ) . '</p>';
+
+			return;
+		}
+
+		echo '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">';
+
+		foreach ( $gallery_ids as $attachment_id ) {
+			$edit_link = get_edit_post_link( $attachment_id );
+			$is_video  = str_starts_with( (string) get_post_mime_type( $attachment_id ), 'video/' );
+
+			echo '<a href="' . esc_url( (string) $edit_link ) . '" style="display:block;position:relative;border-radius:4px;overflow:hidden;aspect-ratio:1;background:#f0f0f1;">';
+
+			if ( $is_video ) {
+				echo '<span class="dashicons dashicons-video-alt3" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:28px;color:#646970;"></span>';
+			} else {
+				echo wp_get_attachment_image(
+					$attachment_id,
+					'thumbnail',
+					false,
+					[ 'style' => 'width:100%;height:100%;object-fit:cover;display:block;' ]
+				);
+			}
+
+			echo '</a>';
+		}
+
+		echo '</div>';
+		echo '<p class="description" style="margin-top:8px;">' . esc_html__( 'Managed in the ATX admin — synced automatically.', 'atx-digital-ticketing-connect' ) . '</p>';
 	}
 }

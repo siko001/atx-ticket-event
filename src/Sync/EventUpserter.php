@@ -88,7 +88,10 @@ final class EventUpserter {
 		update_post_meta( $post_id, '_atx_requires_attendee_details', ! empty( $event['requires_attendee_details'] ) ? 1 : 0 );
 		update_post_meta( $post_id, '_atx_published_at', sanitize_text_field( (string) ( $event['published_at'] ?? '' ) ) );
 		update_post_meta( $post_id, '_atx_checkout_url', esc_url_raw( (string) ( $event['checkout_url'] ?? '' ) ) );
-		update_post_meta( $post_id, '_atx_payload', wp_json_encode( $event ) );
+		// wp_slash guards the JSON against WP's unslashing on save; the flags
+		// keep URLs/unicode readable (and free of the backslashes that would
+		// otherwise be stripped, corrupting the stored payload).
+		update_post_meta( $post_id, '_atx_payload', wp_slash( (string) wp_json_encode( $event, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) ) );
 	}
 
 	/**
