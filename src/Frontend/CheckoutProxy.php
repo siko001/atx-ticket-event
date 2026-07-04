@@ -70,15 +70,25 @@ final class CheckoutProxy {
 			'cancel_url'    => self::page_url( (int) $settings['cancel_page_id'] ),
 		];
 
+		$body = (string) wp_json_encode( $payload );
+
+		// Signed so Laravel knows which connection (site) the order came
+		// through — selecting that connection's Stripe keys and test/live mode.
+		$headers = [
+			'Content-Type' => 'application/json',
+			'Accept'       => 'application/json',
+		];
+
+		if ( '' !== $settings['webhook_secret'] ) {
+			$headers = array_merge( $headers, \AtxDigitalTicketing\Support\Signature::headers( $settings['webhook_secret'], $body ) );
+		}
+
 		$response = wp_remote_post(
 			$base_url . '/api/ticketing/events/' . $event_id . '/checkout',
 			[
 				'timeout' => 20,
-				'headers' => [
-					'Content-Type' => 'application/json',
-					'Accept'       => 'application/json',
-				],
-				'body'    => wp_json_encode( $payload ),
+				'headers' => $headers,
+				'body'    => $body,
 			]
 		);
 
