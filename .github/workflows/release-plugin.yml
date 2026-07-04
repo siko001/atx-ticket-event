@@ -120,8 +120,8 @@ jobs:
                 1
             );
             $contents = preg_replace(
-                "/define\( 'ATX_TICKETING_VERSION', '[^']*' \)/",
-                "define( 'ATX_TICKETING_VERSION', '$version' )",
+                "/define\( \x27ATX_TICKETING_VERSION\x27, \x27[^\x27]*\x27 \)/",
+                "define( \x27ATX_TICKETING_VERSION\x27, \x27{$version}\x27 )",
                 $contents,
                 1
             );
