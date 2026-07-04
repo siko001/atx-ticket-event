@@ -9,7 +9,7 @@ declare(strict_types=1);
 
 return [
 	'owner'        => 'siko001',
-	'repo'         => 'atx-ticket-event',
+	'repo'         => 'atx-ticket-event-wordpress',
 	'slug'         => 'atx-digital-ticketing-connect',
 	'zip_asset'    => 'atx-digital-ticketing-connect.zip',
 	'cache_key'    => 'atx_digital_ticketing_connect_github_release',
