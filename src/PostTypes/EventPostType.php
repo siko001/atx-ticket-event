@@ -57,6 +57,16 @@ final class EventPostType {
 				'hierarchical' => true,
 				'show_in_rest' => true,
 				'rewrite'      => [ 'slug' => 'event-category' ],
+				// Categories are owned by the ATX platform and pushed one-way, so
+				// the terms are viewable in wp-admin but not creatable, editable,
+				// deletable or manually assignable here. Sync writes them in code
+				// (which bypasses these capability checks).
+				'capabilities' => [
+					'manage_terms' => 'manage_categories',
+					'edit_terms'   => 'do_not_allow',
+					'delete_terms' => 'do_not_allow',
+					'assign_terms' => 'do_not_allow',
+				],
 			]
 		);
 
@@ -266,8 +276,16 @@ final class EventPostType {
 	public static function payload( int $post_id ): array {
 		$raw     = (string) get_post_meta( $post_id, '_atx_payload', true );
 		$decoded = json_decode( $raw, true );
+		$payload = is_array( $decoded ) ? $decoded : [];
 
-		return is_array( $decoded ) ? $decoded : [];
+		/**
+		 * Filter the decoded event payload before it is used for display.
+		 * Lets a theme/plugin add or tweak data for custom blocks.
+		 *
+		 * @param array<string, mixed> $payload Decoded payload.
+		 * @param int                  $post_id Event post id.
+		 */
+		return (array) apply_filters( 'atx_ticketing_event_payload', $payload, $post_id );
 	}
 
 	/**

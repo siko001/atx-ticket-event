@@ -50,7 +50,7 @@ final class Shortcodes {
 		$scope  = self::clean_scope( (string) $atts['scope'] );
 		$layout = 'carousel' === $atts['layout'] ? 'carousel' : 'grid';
 
-		$query = new WP_Query( self::query_args( $scope, $atts ) );
+		$query = self::query( $atts );
 
 		Plugin::enqueue_frontend_style();
 
@@ -149,6 +149,29 @@ final class Shortcodes {
 				'event'      => EventPostType::payload( $post->ID ),
 			]
 		);
+	}
+
+	/**
+	 * Public query builder for synced events, reusable by theme/block
+	 * developers via atx_ticketing_get_events(). Accepts: scope
+	 * (upcoming|past|all), category (slug), limit, orderby (date|title),
+	 * order (ASC|DESC).
+	 *
+	 * @param array<string, mixed> $atts
+	 */
+	public static function query( array $atts = [] ): WP_Query {
+		$atts = array_merge(
+			[
+				'scope'    => 'upcoming',
+				'category' => '',
+				'limit'    => 12,
+				'orderby'  => 'date',
+				'order'    => '',
+			],
+			$atts
+		);
+
+		return new WP_Query( self::query_args( self::clean_scope( (string) $atts['scope'] ), $atts ) );
 	}
 
 	/**

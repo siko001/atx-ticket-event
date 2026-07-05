@@ -54,40 +54,37 @@ final class Plugin {
 		add_action( 'wp_enqueue_scripts', [ $this, 'register_assets' ] );
 		add_action( 'update_option_atx_ticketing_settings', [ self::class, 'maybe_notify_mode_change' ], 10, 2 );
 		add_action( 'admin_notices', [ self::class, 'test_mode_notice' ] );
-		add_action( 'admin_init', [ self::class, 'maybe_backfill_start_ts' ] );
+		add_action( 'admin_init', [ self::class, 'maybe_reindex_after_update' ] );
 	}
 
 	/**
-	 * One-time backfill of the numeric _atx_starts_at_ts meta for events that
-	 * were synced before it existed, so the Events block's upcoming/past
-	 * filtering works without waiting for the next full sync.
+	 * After a plugin update, re-derive every mirrored event's structured meta
+	 * and terms from its stored _atx_payload. This is a local refresh (no
+	 * network) that populates any newly introduced meta keys, so a plugin
+	 * update never leaves events showing stale/missing data until a manual
+	 * "Sync now". Runs once per version.
 	 */
-	public static function maybe_backfill_start_ts(): void {
-		if ( get_option( 'atx_ticketing_start_ts_backfilled' ) ) {
+	public static function maybe_reindex_after_update(): void {
+		if ( get_option( 'atx_ticketing_indexed_version' ) === ATX_TICKETING_VERSION ) {
 			return;
 		}
 
-		$posts = get_posts(
+		$ids = get_posts(
 			[
 				'post_type'      => \AtxDigitalTicketing\PostTypes\EventPostType::POST_TYPE,
 				'post_status'    => 'any',
-				'posts_per_page' => 500, // phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page -- One-time bounded backfill.
+				'posts_per_page' => 1000, // phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page -- Bounded one-per-version reindex.
 				'fields'         => 'ids',
-				'meta_query'     => [ // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
-					[
-						'key'     => '_atx_starts_at_ts',
-						'compare' => 'NOT EXISTS',
-					],
-				],
 			]
 		);
 
-		foreach ( $posts as $post_id ) {
-			$starts_at = (string) get_post_meta( (int) $post_id, '_atx_starts_at', true );
-			update_post_meta( (int) $post_id, '_atx_starts_at_ts', '' !== $starts_at ? (int) strtotime( $starts_at ) : 0 );
+		$upserter = new \AtxDigitalTicketing\Sync\EventUpserter();
+
+		foreach ( $ids as $post_id ) {
+			$upserter->reindex( (int) $post_id );
 		}
 
-		update_option( 'atx_ticketing_start_ts_backfilled', 1 );
+		update_option( 'atx_ticketing_indexed_version', ATX_TICKETING_VERSION );
 	}
 
 	/**

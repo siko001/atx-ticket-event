@@ -41,6 +41,9 @@ if ( file_exists( ATX_TICKETING_DIR . 'vendor/autoload.php' ) ) {
 	);
 }
 
+// Public helper functions for theme/block developers (atx_ticketing_get_event…).
+require_once ATX_TICKETING_DIR . 'src/helpers.php';
+
 \AtxDigitalTicketing\Plugin::instance()->boot();
 
 register_activation_hook(

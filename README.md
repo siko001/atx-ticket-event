@@ -86,6 +86,41 @@ workflow) — `.github/workflows/release-plugin.yml` builds
 header and attaches it to a GitHub Release. The Laravel package deliberately has
 no updater — it is deployed with the app via Composer.
 
+## For developers — building custom displays
+
+Build your own blocks, sliders or parallax layouts on the synced data without
+editing plugin files or synced posts:
+
+```php
+// Full payload for one event (occurrences, ticket_types, speakers, sponsors,
+// registration_questions, venue, image_url, gallery_urls, checkout_url, post_id…).
+$event = atx_ticketing_get_event();          // current post, or pass a post/ID
+
+// A custom loop (scope: upcoming|past|all, category slug, limit, orderby, order).
+$q = atx_ticketing_get_events( [ 'scope' => 'past', 'limit' => 6 ] );
+while ( $q->have_posts() ) { $q->the_post(); /* … */ }
+wp_reset_postdata();
+```
+
+Filters & actions:
+
+| Hook | Type | Use |
+|---|---|---|
+| `atx_ticketing_event_payload` | filter `($payload, $post_id)` | add/tweak event data |
+| `atx_ticketing_before_single_event` / `_after_single_event` | action `($event, $post)` | inject markup around a single event (e.g. a parallax hero) |
+| `atx_ticketing_before_events` / `_after_events` | action `($query, $scope)` | inject markup around a list |
+
+For a custom Gutenberg block, register your own block and call
+`atx_ticketing_get_event()` / `atx_ticketing_get_events()` in its
+`render_callback` — the data shape is identical to what the built-in blocks use.
+Structured meta (`_atx_starts_at`, `_atx_starts_at_ts`, `_atx_venue_name`,
+`_atx_status`, …) is also readable directly with `get_post_meta()`.
+
+Events **and** their categories are one-way mirrors: both are read-only in
+wp-admin (categories are viewable but not creatable/editable) — the ATX platform
+owns them and overwrites local changes on sync. After a plugin update the mirror
+re-derives its display data automatically, so no manual "Sync now" is needed.
+
 ## Development
 
 ```bash

@@ -67,6 +67,27 @@ final class EventUpserter {
 	}
 
 	/**
+	 * Re-derive the structured meta and terms for an already-synced event from
+	 * its stored _atx_payload — a purely local refresh (no network round-trip,
+	 * no media re-download). Used after a plugin update so newly introduced meta
+	 * keys are populated without a manual "Sync now". Returns false when there
+	 * is no usable stored payload.
+	 */
+	public function reindex( int $post_id ): bool {
+		$raw     = (string) get_post_meta( $post_id, '_atx_payload', true );
+		$payload = '' !== $raw ? json_decode( $raw, true ) : null;
+
+		if ( ! is_array( $payload ) || empty( $payload['id'] ) ) {
+			return false;
+		}
+
+		$this->sync_meta( $post_id, $payload );
+		$this->sync_terms( $post_id, is_array( $payload['categories'] ?? null ) ? $payload['categories'] : [] );
+
+		return true;
+	}
+
+	/**
 	 * @param array<string, mixed> $event Payload "event" object.
 	 */
 	private function sync_meta( int $post_id, array $event ): void {

@@ -22,6 +22,15 @@ $atx_empty = 'past' === $atx_scope
 	? __( 'No past events to show yet.', 'atx-digital-ticketing-connect' )
 	: __( 'No upcoming events at the moment — check back soon.', 'atx-digital-ticketing-connect' );
 ?>
+<?php
+/**
+ * Fires before the events list — inject headings, filters or custom wrappers.
+ *
+ * @param WP_Query $events_query The events query.
+ * @param string   $scope        upcoming|past|all.
+ */
+do_action( 'atx_ticketing_before_events', $events_query, $atx_scope );
+?>
 <div class="atx-events atx-events--<?php echo esc_attr( $atx_layout ); ?> atx-events--cols-<?php echo esc_attr( (string) $atx_columns ); ?>">
 	<?php if ( ! $events_query->have_posts() ) : ?>
 		<p class="atx-events__empty"><?php echo esc_html( $atx_empty ); ?></p>
@@ -80,3 +89,11 @@ $atx_empty = 'past' === $atx_scope
 	<?php endwhile; ?>
 	</div>
 </div>
+<?php
+/**
+ * Fires after the events list.
+ *
+ * @param WP_Query $events_query The events query.
+ * @param string   $scope        upcoming|past|all.
+ */
+do_action( 'atx_ticketing_after_events', $events_query, $atx_scope );

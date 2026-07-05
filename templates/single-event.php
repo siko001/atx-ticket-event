@@ -22,6 +22,16 @@ $atx_venue    = is_array( $event['venue'] ?? null ) ? $event['venue'] : [];
 $atx_speakers = is_array( $event['speakers'] ?? null ) ? $event['speakers'] : [];
 $atx_sponsors = is_array( $event['sponsors'] ?? null ) ? $event['sponsors'] : [];
 ?>
+<?php
+/**
+ * Fires before the single event markup — an injection point for custom
+ * sections/wrappers (parallax hero, breadcrumbs…) without copying the template.
+ *
+ * @param array<string, mixed> $event      Full event payload.
+ * @param WP_Post              $event_post The event post.
+ */
+do_action( 'atx_ticketing_before_single_event', $event, $event_post );
+?>
 <article class="atx-event">
 	<header class="atx-event__header">
 		<h1 class="atx-event__title"><?php echo esc_html( get_the_title( $event_post ) ); ?></h1>
@@ -151,3 +161,11 @@ $atx_sponsors = is_array( $event['sponsors'] ?? null ) ? $event['sponsors'] : []
 		</section>
 	<?php endif; ?>
 </article>
+<?php
+/**
+ * Fires after the single event markup.
+ *
+ * @param array<string, mixed> $event      Full event payload.
+ * @param WP_Post              $event_post The event post.
+ */
+do_action( 'atx_ticketing_after_single_event', $event, $event_post );
