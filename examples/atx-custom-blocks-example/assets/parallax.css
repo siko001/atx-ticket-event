@@ -1,0 +1,75 @@
+/* Featured event parallax hero (example). */
+.atx-ex-parallax {
+	position: relative;
+	overflow: hidden;
+	border-radius: 14px;
+	min-height: var(--atx-ex-height, 460px);
+	display: flex;
+	align-items: flex-end;
+	color: #fff;
+}
+
+/* The image sits behind and is taller than the frame so it can shift on scroll. */
+.atx-ex-parallax__bg {
+	position: absolute;
+	inset: -20% 0;
+	background-size: cover;
+	background-position: center;
+	will-change: transform;
+	z-index: 0;
+}
+
+.atx-ex-parallax.has-overlay::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(to top, rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0.1) 60%, rgba(0, 0, 0, 0.25));
+	z-index: 1;
+}
+
+.atx-ex-parallax__inner {
+	position: relative;
+	z-index: 2;
+	padding: 2rem 2.25rem;
+	max-width: 40rem;
+}
+
+.atx-ex-parallax__title {
+	margin: 0 0 0.4rem;
+	font-size: clamp(1.6rem, 4vw, 2.6rem);
+	line-height: 1.1;
+}
+
+.atx-ex-parallax__title a {
+	color: inherit;
+	text-decoration: none;
+}
+
+.atx-ex-parallax__meta {
+	margin: 0 0 1rem;
+	opacity: 0.9;
+	font-size: 1rem;
+}
+
+.atx-ex-parallax__cta {
+	display: inline-block;
+	padding: 0.6rem 1.3rem;
+	border-radius: 8px;
+	background: #fff;
+	color: #111;
+	font-weight: 600;
+	text-decoration: none;
+}
+
+.atx-ex-parallax__cta:hover {
+	opacity: 0.9;
+	color: #111;
+}
+
+/* Respect users who ask for less motion. */
+@media (prefers-reduced-motion: reduce) {
+	.atx-ex-parallax__bg {
+		inset: 0;
+		transform: none !important;
+	}
+}

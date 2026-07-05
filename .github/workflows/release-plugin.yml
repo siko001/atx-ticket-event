@@ -107,6 +107,7 @@ jobs:
             --exclude='node_modules' \
             --exclude='vendor' \
             --exclude='tests' \
+            --exclude='examples' \
             --exclude='.DS_Store'
 
           php -r '
