@@ -154,6 +154,13 @@ $atx_format_price = static function ( int $minor, string $currency ): string {
 									<?php echo esc_html( (string) $atx_q_option ); ?>
 								</label>
 							<?php endforeach; ?>
+						<?php elseif ( 'checkboxes' === $atx_q_type ) : ?>
+							<?php foreach ( $atx_q_options as $atx_q_option ) : ?>
+								<label class="atx-field__checkbox">
+									<input type="checkbox" data-atx-multi="1" name="<?php echo esc_attr( $atx_q_name ); ?>" value="<?php echo esc_attr( (string) $atx_q_option ); ?>">
+									<?php echo esc_html( (string) $atx_q_option ); ?>
+								</label>
+							<?php endforeach; ?>
 						<?php else : ?>
 							<input id="atx-q-<?php echo esc_attr( (string) $atx_q_id ); ?>" type="text" name="<?php echo esc_attr( $atx_q_name ); ?>" <?php echo $atx_q_required ? 'required' : ''; ?>>
 						<?php endif; ?>

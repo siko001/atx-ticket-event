@@ -120,7 +120,7 @@ final class CheckoutProxy {
 	 * Per-ticket attendee details (used when the event names every ticket).
 	 *
 	 * @param mixed $attendees Raw attendees input.
-	 * @return array<int, array{ticket_type_id: int, name: string, email?: string}>
+	 * @return array<int, array<string, mixed>>
 	 */
 	private static function sanitize_attendees( $attendees ): array {
 		$clean = [];
@@ -140,6 +140,12 @@ final class CheckoutProxy {
 
 			if ( ! empty( $attendee['email'] ) && is_email( (string) $attendee['email'] ) ) {
 				$entry['email'] = sanitize_email( (string) $attendee['email'] );
+			}
+
+			$answers = self::sanitize_answers( $attendee['answers'] ?? [] );
+
+			if ( $answers ) {
+				$entry['answers'] = $answers;
 			}
 
 			$clean[] = $entry;

@@ -225,7 +225,8 @@
 	max-width: 26rem;
 }
 
-.atx-field__radio {
+.atx-field__radio,
+.atx-field__checkbox {
 	display: block;
 	font-weight: 400;
 }
