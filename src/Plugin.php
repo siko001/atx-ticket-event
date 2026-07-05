@@ -52,6 +52,10 @@ final class Plugin {
 		Tools::register();
 		add_action( 'add_meta_boxes', [ EventPostType::class, 'register_meta_boxes' ] );
 		add_action( 'wp_enqueue_scripts', [ $this, 'register_assets' ] );
+		// Enqueue at the proper time (during wp_head) for any view that shows
+		// events. Blocks/shortcodes render inside the_content — far too late to
+		// enqueue their own CSS/JS into the head — so we detect them up front.
+		add_action( 'wp_enqueue_scripts', [ self::class, 'maybe_enqueue_frontend_assets' ], 20 );
 		add_action( 'update_option_atx_ticketing_settings', [ self::class, 'maybe_notify_mode_change' ], 10, 2 );
 		add_action( 'admin_notices', [ self::class, 'test_mode_notice' ] );
 		add_action( 'admin_init', [ self::class, 'maybe_reindex_after_update' ] );
@@ -204,6 +208,65 @@ final class Plugin {
 		if ( ! empty( self::settings()['use_plugin_styles'] ) ) {
 			wp_enqueue_style( 'atx-ticketing-frontend' );
 		}
+	}
+
+	/**
+	 * Front-of-site: enqueue the styles/scripts a page needs during wp_head,
+	 * so they land in the document head/footer correctly. Runs whenever the
+	 * current view shows events (event CPT single/archive, or a page/post whose
+	 * content uses an ATX block or shortcode). The render callbacks still call
+	 * the on-demand enqueues too, which is harmless (WP de-dupes handles).
+	 */
+	public static function maybe_enqueue_frontend_assets(): void {
+		if ( ! self::current_view_has_events() ) {
+			return;
+		}
+
+		self::enqueue_frontend_style();
+
+		// The carousel script self-guards (no-ops without a carousel on the
+		// page) and injects its own critical layout CSS, so a list/slider works
+		// even when plugin styling is off.
+		wp_enqueue_script( 'atx-ticketing-events-carousel' );
+
+		// A single event also renders the buy form and the gallery lightbox.
+		if ( is_singular( EventPostType::POST_TYPE ) ) {
+			wp_enqueue_script( 'atx-ticketing-ticket-form' );
+			wp_enqueue_script( 'atx-ticketing-gallery' );
+		}
+	}
+
+	/**
+	 * Whether the current main view will display event content — the event CPT
+	 * single/archive/category, or a singular post/page whose content contains
+	 * one of the plugin's blocks or shortcodes.
+	 */
+	private static function current_view_has_events(): bool {
+		if (
+			is_singular( EventPostType::POST_TYPE )
+			|| is_post_type_archive( EventPostType::POST_TYPE )
+			|| is_tax( EventPostType::TAXONOMY )
+		) {
+			return true;
+		}
+
+		$post = get_post();
+
+		if ( ! $post instanceof \WP_Post ) {
+			return false;
+		}
+
+		if ( has_block( 'atx-ticketing/events', $post ) || has_block( 'atx-ticketing/featured-event', $post ) ) {
+			return true;
+		}
+
+		foreach ( [ 'atx_events', 'atx_event', 'atx_featured_event' ] as $shortcode ) {
+			if ( has_shortcode( (string) $post->post_content, $shortcode ) ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
