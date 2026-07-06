@@ -138,7 +138,7 @@ final class SettingsPage {
 
 	private static function current_tab(): string {
 		$tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'connection'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		return in_array( $tab, [ 'connection', 'display', 'pages', 'tools', 'logs' ], true ) ? $tab : 'connection';
+		return in_array( $tab, [ 'connection', 'display', 'permalinks', 'pages', 'tools', 'logs' ], true ) ? $tab : 'connection';
 	}
 
 	public static function render(): void {
