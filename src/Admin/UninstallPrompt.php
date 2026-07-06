@@ -62,14 +62,16 @@ final class UninstallPrompt {
 			</div>
 		</div>
 		<style>
-			.atx-uninstall-modal{position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5);}
-			.atx-uninstall-modal[hidden]{display:none;}
-			.atx-uninstall-modal__box{background:#fff;border-radius:6px;max-width:540px;width:90%;padding:1.5em;box-shadow:0 5px 30px rgba(0,0,0,.3);max-height:90vh;overflow:auto;}
-			.atx-uninstall-modal__box h2{margin-top:0;}
-			.atx-uninstall-opt{display:block;width:100%;height:auto;text-align:left;padding:.7em .9em;margin-bottom:.6em;white-space:normal;cursor:pointer;}
-			.atx-uninstall-opt strong{display:block;}
-			.atx-uninstall-opt span{display:block;font-weight:400;opacity:.8;margin-top:.25em;}
-			.atx-uninstall-opt--danger{color:#b32d2e;border-color:#b32d2e;}
+			/* Scoped under the modal #id so these outrank WordPress's .wp-core-ui .button rules (which otherwise force nowrap and the blue link colour). */
+			#atx-uninstall-modal{position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5);}
+			#atx-uninstall-modal[hidden]{display:none;}
+			#atx-uninstall-modal .atx-uninstall-modal__box{background:#fff;border-radius:6px;max-width:540px;width:90%;padding:1.5em;box-shadow:0 5px 30px rgba(0,0,0,.3);max-height:90vh;overflow:auto;}
+			#atx-uninstall-modal .atx-uninstall-modal__box h2{margin-top:0;}
+			#atx-uninstall-modal .atx-uninstall-opt{display:block;width:100%;height:auto;min-height:0;line-height:1.5;text-align:left;padding:.7em .9em;margin:0 0 .6em;white-space:normal;overflow-wrap:break-word;word-break:break-word;box-sizing:border-box;cursor:pointer;}
+			#atx-uninstall-modal .atx-uninstall-opt strong{display:block;white-space:normal;color:#1d2327;}
+			#atx-uninstall-modal .atx-uninstall-opt span{display:block;font-weight:400;color:#50575e;opacity:1;margin-top:.25em;white-space:normal;overflow-wrap:break-word;}
+			#atx-uninstall-modal .atx-uninstall-opt--danger{border-color:#b32d2e;}
+			#atx-uninstall-modal .atx-uninstall-opt--danger strong,#atx-uninstall-modal .atx-uninstall-opt--danger span{color:#b32d2e;}
 		</style>
 		<script>
 		( function () {
