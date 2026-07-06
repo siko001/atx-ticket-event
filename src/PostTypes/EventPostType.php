@@ -22,10 +22,22 @@ final class EventPostType {
 	public const POST_TYPE = 'atx_event';
 	public const TAXONOMY  = 'atx_event_category';
 
+	/**
+	 * A URL-safe slug, falling back when the value sanitises to empty.
+	 *
+	 * @param mixed  $value    Raw slug value.
+	 * @param string $fallback Default when empty.
+	 */
+	private static function sanitized_slug( $value, string $fallback ): string {
+		$slug = sanitize_title( (string) $value );
+
+		return '' !== $slug ? $slug : $fallback;
+	}
+
 	public static function register(): void {
 		$settings      = Plugin::settings();
-		$events_slug   = sanitize_title( (string) ( $settings['events_slug'] ?? 'events' ) ) ?: 'events';
-		$category_slug = sanitize_title( (string) ( $settings['category_slug'] ?? 'event-category' ) ) ?: 'event-category';
+		$events_slug   = self::sanitized_slug( $settings['events_slug'] ?? 'events', 'events' );
+		$category_slug = self::sanitized_slug( $settings['category_slug'] ?? 'event-category', 'event-category' );
 
 		register_post_type(
 			self::POST_TYPE,

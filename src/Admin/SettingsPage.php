@@ -78,18 +78,28 @@ final class SettingsPage {
 		$input   = (array) $input;
 		$current = Plugin::settings();
 
-		$events_slug = array_key_exists( 'events_slug', $input )
-			? ( sanitize_title( (string) $input['events_slug'] ) ?: 'events' )
-			: (string) ( $current['events_slug'] ?? 'events' );
+		$current_events_slug   = (string) ( $current['events_slug'] ?? 'events' );
+		$current_category_slug = (string) ( $current['category_slug'] ?? 'event-category' );
 
-		$category_slug = array_key_exists( 'category_slug', $input )
-			? ( sanitize_title( (string) $input['category_slug'] ) ?: 'event-category' )
-			: (string) ( $current['category_slug'] ?? 'event-category' );
+		$events_slug = $current_events_slug;
+		if ( array_key_exists( 'events_slug', $input ) ) {
+			$events_slug = sanitize_title( (string) $input['events_slug'] );
+			if ( '' === $events_slug ) {
+				$events_slug = 'events';
+			}
+		}
+
+		$category_slug = $current_category_slug;
+		if ( array_key_exists( 'category_slug', $input ) ) {
+			$category_slug = sanitize_title( (string) $input['category_slug'] );
+			if ( '' === $category_slug ) {
+				$category_slug = 'event-category';
+			}
+		}
 
 		// A changed slug needs a rewrite-rules flush, deferred to the next init()
 		// once the post type re-registers with the new slug (see EventPostType).
-		if ( $events_slug !== (string) ( $current['events_slug'] ?? 'events' )
-			|| $category_slug !== (string) ( $current['category_slug'] ?? 'event-category' ) ) {
+		if ( $current_events_slug !== $events_slug || $current_category_slug !== $category_slug ) {
 			update_option( 'atx_ticketing_flush_rewrites', 1 );
 		}
 
