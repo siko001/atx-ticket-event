@@ -148,6 +148,16 @@ ticket checkout do.
   plugin is gone they simply render nothing rather than breaking the page.
   (Shortcodes, if you used any, would show as literal text — prefer the blocks.)
 
+**WP-CLI.** `wp plugin deactivate …` never removes data. To delete the plugin and
+choose what happens to the data from the command line, use the bundled command
+(the CLI equivalent of the Plugins-screen prompt):
+
+```bash
+wp atx-ticketing uninstall               # asks keep or delete, then removes the plugin
+wp atx-ticketing uninstall --data=keep   # remove plugin, keep events for a later reinstall
+wp atx-ticketing uninstall --data=delete --yes   # remove plugin AND all data (no prompt)
+```
+
 ## Development
 
 ```bash

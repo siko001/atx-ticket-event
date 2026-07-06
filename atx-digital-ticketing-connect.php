@@ -46,6 +46,9 @@ require_once ATX_TICKETING_DIR . 'src/helpers.php';
 
 \AtxDigitalTicketing\Plugin::instance()->boot();
 
+// WP-CLI: `wp atx-ticketing …` commands (uninstall with keep/delete data).
+\AtxDigitalTicketing\Cli\Commands::register();
+
 register_activation_hook(
 	__FILE__,
 	static function (): void {
